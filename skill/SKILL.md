@@ -9,7 +9,7 @@ Use `graph_search` to find entities, people, projects, organizations, decisions,
 ## Query patterns
 - **Relationship lookup**: `graph_search("Alice")` — find a person and all their connections
 - **Project context**: `graph_search("ProjectName", type="project")` — find project details and related entities
-- **Organization lookup**: `graph_search("Letterhead", type="organization")` — find companies and their connections
+- **Organization lookup**: `graph_search("Acme Corp", type="organization")` — find companies and their connections
 - **Decision audit**: `graph_search("migration", type="decision")` — find decisions about a topic
 - **Pre-conversation context**: Search for a person before replying to refresh relationship context
 - **Risk scan**: Search for a technology or tool to find past decisions and known issues

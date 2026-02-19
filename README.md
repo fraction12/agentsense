@@ -17,13 +17,13 @@ But it can't answer *"who's connected to what?"*
 AgentSense can.
 
 ```
-You: Tell me about Brandon
+You: Tell me about Alice
 
-graph_search → brandon watkins [person]
-                → partner → tradespec ai [project]
-                    → competes_with → togal ai [company]
-                    → competes_with → plancheck pro ai [company]
-                → brother_in_law → dushyant garg [person]
+graph_search → alice chen [person]
+                → partner → solar bid tool [project]
+                    → competes_with → buildcost ai [company]
+                    → competes_with → estimate pro [company]
+                → colleague → bob martinez [person]
 ```
 
 One query. Three hops. Relationships your agent never has to re-discover.
@@ -147,10 +147,10 @@ Without the cron, observations accumulate but the graph stays empty. The plugin 
 Your agent gets a new tool for structured entity lookup:
 
 ```
-graph_search("Brandon")
-→ brandon watkins [person]
-  → partner → tradespec ai [project]
-  → brother_in_law → dushyant garg [person]
+graph_search("Alice")
+→ alice chen [person]
+  → partner → solar bid tool [project]
+  → colleague → bob martinez [person]
 ```
 
 ### `/graph` Telegram Command
