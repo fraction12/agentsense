@@ -6,7 +6,9 @@ export type EntityType =
   | "idea"
   | "preference"
   | "place"
-  | "tool";
+  | "tool"
+  | "organization"
+  | "company";
 
 export type GraphNode = {
   id: number;

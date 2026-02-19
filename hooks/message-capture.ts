@@ -3,6 +3,7 @@ import type { EntityExtractor } from "../extractor.js";
 import type { PluginLogger } from "../plugin-types.js";
 
 const RATE_LIMIT_MS = 30_000; // Max 1 extraction per 30 seconds
+const MAX_BUFFER_SIZE = 50; // Prevent unbounded growth
 
 export function createMessageCaptureHandlers(
   getDb: () => GraphDB | null,
@@ -21,7 +22,8 @@ export function createMessageCaptureHandlers(
     const now = Date.now();
     if (now - lastExtractionTime < RATE_LIMIT_MS) return;
 
-    const texts = messageBuffer.splice(0, messageBuffer.length);
+    const texts = [...messageBuffer];
+    messageBuffer.length = 0;
     const combined = texts.join("\n\n---\n\n").slice(0, 4000);
 
     if (combined.length < minMessageLength) return;
@@ -38,6 +40,11 @@ export function createMessageCaptureHandlers(
         `agentsense: message capture extracted ${result.nodes.length} entities`,
       );
     } catch (err) {
+      // Restore messages on failure so they're not lost
+      messageBuffer.unshift(...texts);
+      if (messageBuffer.length > MAX_BUFFER_SIZE) {
+        messageBuffer.splice(0, messageBuffer.length - MAX_BUFFER_SIZE);
+      }
       logger.warn(`agentsense: message capture extraction failed: ${String(err)}`);
     }
   }
@@ -50,6 +57,9 @@ export function createMessageCaptureHandlers(
     if (content.includes("<knowledge-graph-context>")) return;
 
     messageBuffer.push(content);
+    if (messageBuffer.length > MAX_BUFFER_SIZE) {
+      messageBuffer.splice(0, messageBuffer.length - MAX_BUFFER_SIZE);
+    }
 
     // Fire-and-forget: never block message delivery
     if (!pendingExtraction) {

@@ -10,6 +10,8 @@ const VALID_ENTITY_TYPES: EntityType[] = [
   "preference",
   "place",
   "tool",
+  "organization",
+  "company",
 ];
 
 const EXTRACTION_PROMPT = `You are an entity extraction system. Given conversation text, extract entities and relationships into a knowledge graph.
@@ -17,7 +19,7 @@ const EXTRACTION_PROMPT = `You are an entity extraction system. Given conversati
 Output ONLY valid JSON with this exact structure:
 {
   "nodes": [
-    {"name": "Entity Name", "type": "person|project|decision|event|idea|preference|place|tool", "summary": "Brief description"}
+    {"name": "Entity Name", "type": "person|project|decision|event|idea|preference|place|tool|organization|company", "summary": "Brief description"}
   ],
   "edges": [
     {"from": "Source Entity", "to": "Target Entity", "relation": "relationship type", "context": "Brief context"}

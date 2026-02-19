@@ -30,7 +30,7 @@ const agentSensePlugin = {
     const extractor = new EntityExtractor(cfg.extractionApiKey, cfg.extractionModel);
 
     api.logger.info(
-      `agentsense: plugin registered (db: ${resolvedDbPath}, model: ${cfg.extractionModel})`,
+      `agentsense: plugin registered (db: ${resolvedDbPath}, model: ${cfg.extractionModel}, capture: ${cfg.autoCapture}, recall: ${cfg.autoRecall})`,
     );
 
     // ========================================================================

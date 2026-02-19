@@ -1,3 +1,5 @@
+import { mkdirSync } from "node:fs";
+import { dirname } from "node:path";
 import Database from "better-sqlite3";
 import type {
   EntityType,
@@ -21,6 +23,7 @@ export class GraphDB {
   initialize(): void {
     if (this.db) return;
 
+    mkdirSync(dirname(this.dbPath), { recursive: true });
     this.db = new Database(this.dbPath);
     this.db.pragma("journal_mode = WAL");
     this.db.pragma("foreign_keys = ON");
@@ -263,11 +266,12 @@ export class GraphDB {
 
     // Fallback to LIKE search if FTS returned nothing
     if (nodeRows.length === 0) {
-      const likePattern = `%${query.toLowerCase()}%`;
+      const escaped = query.toLowerCase().replace(/[%_]/g, "\\$&");
+      const likePattern = `%${escaped}%`;
       nodeRows = db
         .prepare(
           `SELECT * FROM nodes
-           WHERE name LIKE ? OR summary LIKE ?
+           WHERE name LIKE ? ESCAPE '\\' OR summary LIKE ? ESCAPE '\\'
            ORDER BY updated_at DESC
            LIMIT ?`,
         )
