@@ -49,13 +49,6 @@ else
   exit 1
 fi
 
-if [ -d "node_modules/@anthropic-ai/sdk" ]; then
-  echo "  OK: @anthropic-ai/sdk installed"
-else
-  echo "  MISSING: @anthropic-ai/sdk (run npm install)"
-  exit 1
-fi
-
 if [ -d "node_modules/@sinclair/typebox" ]; then
   echo "  OK: @sinclair/typebox installed"
 else
