@@ -37,7 +37,7 @@ export function createGraphSearchTool(getDb: () => GraphDB | null) {
       type: Type.Optional(
         Type.String({
           description:
-            "Filter by entity type: person, project, decision, event, idea, preference, place, tool",
+            "Filter by entity type: person, project, decision, event, idea, preference, place, tool, organization, company, agent, device, platform, skill, concept, habit, routine, subscription, service, credential, file, repository, website, contact, model, product, account",
         }),
       ),
       limit: Type.Optional(

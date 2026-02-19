@@ -1,6 +1,9 @@
 # AgentSense Knowledge Graph
 
-Use `graph_search` to find entities, people, projects, organizations, decisions, and their relationships from past conversations.
+Use `graph_search` to find entities and their relationships from past conversations.
+
+## Supported entity types (27)
+person, project, decision, event, idea, preference, place, tool, organization, company, agent, device, platform, skill, concept, habit, routine, subscription, service, credential, file, repository, website, contact, model, product, account
 
 ## When to use graph_search vs memory_search
 - **graph_search**: Structured lookups — "who works on X?", "what did we decide about Y?", "what company does Z work for?"
@@ -11,6 +14,9 @@ Use `graph_search` to find entities, people, projects, organizations, decisions,
 - **Project context**: `graph_search("ProjectName", type="project")` — find project details and related entities
 - **Organization lookup**: `graph_search("Acme Corp", type="organization")` — find companies and their connections
 - **Decision audit**: `graph_search("migration", type="decision")` — find decisions about a topic
+- **Model lookup**: `graph_search("Haiku", type="model")` — find AI models and their usage
+- **Device check**: `graph_search("Mac Mini", type="device")` — find devices and specs
+- **Subscription check**: `graph_search("Claude", type="subscription")` — find active subscriptions
 - **Pre-conversation context**: Search for a person before replying to refresh relationship context
 - **Risk scan**: Search for a technology or tool to find past decisions and known issues
 

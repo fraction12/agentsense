@@ -8,7 +8,24 @@ export type EntityType =
   | "place"
   | "tool"
   | "organization"
-  | "company";
+  | "company"
+  | "agent"
+  | "device"
+  | "platform"
+  | "skill"
+  | "concept"
+  | "habit"
+  | "routine"
+  | "subscription"
+  | "service"
+  | "credential"
+  | "file"
+  | "repository"
+  | "website"
+  | "contact"
+  | "model"
+  | "product"
+  | "account";
 
 export type GraphNode = {
   id: number;

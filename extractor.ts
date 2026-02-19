@@ -22,6 +22,23 @@ export const VALID_ENTITY_TYPES: EntityType[] = [
   "tool",
   "organization",
   "company",
+  "agent",
+  "device",
+  "platform",
+  "skill",
+  "concept",
+  "habit",
+  "routine",
+  "subscription",
+  "service",
+  "credential",
+  "file",
+  "repository",
+  "website",
+  "contact",
+  "model",
+  "product",
+  "account",
 ];
 
 /**
@@ -32,7 +49,7 @@ export const EXTRACTION_PROMPT = `You are an entity extraction system. Given con
 Output ONLY valid JSON with this exact structure:
 {
   "nodes": [
-    {"name": "Entity Name", "type": "person|project|decision|event|idea|preference|place|tool|organization|company", "summary": "Brief description"}
+    {"name": "Entity Name", "type": "person|project|decision|event|idea|preference|place|tool|organization|company|agent|device|platform|skill|concept|habit|routine|subscription|service|credential|file|repository|website|contact|model|product|account", "summary": "Brief description"}
   ],
   "edges": [
     {"from": "Source Entity", "to": "Target Entity", "relation": "relationship type", "context": "Brief context"}
@@ -40,7 +57,7 @@ Output ONLY valid JSON with this exact structure:
 }
 
 Rules:
-- Extract concrete entities: people, projects, tools, places, decisions, events, ideas, preferences, organizations, companies
+- Extract concrete entities: people, projects, tools, places, decisions, events, ideas, preferences, organizations, companies, agents, devices, platforms, skills, concepts, habits, routines, subscriptions, services, credentials, files, repositories, websites, contacts, models, products, accounts
 - Use descriptive but concise relation types (e.g. "works_on", "decided_to_use", "prefers", "located_in", "partner", "employed_by")
 - Every entity in an edge must appear in the nodes array
 - Keep summaries under 100 characters

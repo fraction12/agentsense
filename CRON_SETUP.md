@@ -56,7 +56,7 @@ For each observation ID from Step 1:
 sqlite3 ~/.openclaw/memory/agentsense.db "SELECT raw_text FROM observations WHERE id = <ID>;"
 
 ### 2b. Identify entities
-Read the text carefully. Find every person, project, tool, company, organization, decision, event, idea, preference, or place mentioned.
+Read the text carefully. Find every person, project, tool, company, organization, decision, event, idea, preference, place, agent, device, platform, skill, concept, habit, routine, subscription, service, credential, file, repository, website, contact, model, product, or account mentioned.
 
 ### 2c. INSERT each entity into the nodes table
 For EACH entity you found, first check if it exists:
