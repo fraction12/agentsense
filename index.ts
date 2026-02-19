@@ -1,6 +1,5 @@
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
 import { GraphDB } from "./graph-db.js";
-import { EntityExtractor } from "./extractor.js";
 import { agentSenseConfigSchema } from "./config.js";
 import {
   createAgentEndHandler,
@@ -15,7 +14,7 @@ const agentSensePlugin = {
   id: "agentsense",
   name: "AgentSense (Knowledge Graph)",
   description:
-    "Knowledge graph memory plugin with entity extraction and relationship tracking",
+    "Knowledge graph memory plugin — captures conversation text, stores entities and relationships. Extraction via cron.",
   kind: "memory" as const,
   configSchema: agentSenseConfigSchema,
 
@@ -27,10 +26,8 @@ const agentSensePlugin = {
     let db: GraphDB | null = null;
     const getDb = (): GraphDB | null => db;
 
-    const extractor = new EntityExtractor(cfg.extractionApiKey, cfg.extractionModel);
-
     api.logger.info(
-      `agentsense: plugin registered (db: ${resolvedDbPath}, model: ${cfg.extractionModel}, capture: ${cfg.autoCapture}, recall: ${cfg.autoRecall})`,
+      `agentsense: plugin registered (db: ${resolvedDbPath}, capture: ${cfg.autoCapture}, recall: ${cfg.autoRecall})`,
     );
 
     // ========================================================================
@@ -89,29 +86,27 @@ const agentSensePlugin = {
     }
 
     // ========================================================================
-    // Auto-Capture Hooks
+    // Auto-Capture Hooks (buffer only — extraction via cron)
     // ========================================================================
 
     if (cfg.autoCapture) {
       api.on(
         "agent_end",
-        createAgentEndHandler(getDb, extractor, api.logger, cfg.captureMinMessageLength),
+        createAgentEndHandler(getDb, api.logger, cfg.captureMinMessageLength),
       );
 
       api.on(
         "before_compaction",
         createBeforeCompactionHandler(
           getDb,
-          extractor,
           api.logger,
           cfg.captureMinMessageLength,
         ),
       );
 
-      // Message-level capture (fire-and-forget)
+      // Message-level capture (fire-and-forget, buffers to DB periodically)
       const messageHandlers = createMessageCaptureHandlers(
         getDb,
-        extractor,
         api.logger,
         cfg.captureMinMessageLength,
       );

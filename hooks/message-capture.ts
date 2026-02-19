@@ -1,52 +1,39 @@
 import type { GraphDB } from "../graph-db.js";
-import type { EntityExtractor } from "../extractor.js";
 import type { PluginLogger } from "../plugin-types.js";
 
-const RATE_LIMIT_MS = 30_000; // Max 1 extraction per 30 seconds
-const MAX_BUFFER_SIZE = 50; // Prevent unbounded growth
+const BUFFER_FLUSH_MS = 60_000; // Flush buffer to DB every 60 seconds
+const MAX_BUFFER_SIZE = 50;
 
 export function createMessageCaptureHandlers(
   getDb: () => GraphDB | null,
-  extractor: EntityExtractor,
   logger: PluginLogger,
   minMessageLength: number,
 ) {
   let messageBuffer: string[] = [];
-  let lastExtractionTime = 0;
-  let pendingExtraction: Promise<void> | null = null;
+  let flushTimer: ReturnType<typeof setTimeout> | null = null;
 
-  async function processBuffer(): Promise<void> {
+  function flushBuffer(): void {
     const db = getDb();
     if (!db || messageBuffer.length === 0) return;
 
-    const now = Date.now();
-    if (now - lastExtractionTime < RATE_LIMIT_MS) return;
-
-    const texts = [...messageBuffer];
-    messageBuffer.length = 0;
-    const combined = texts.join("\n\n---\n\n").slice(0, 4000);
-
-    if (combined.length < minMessageLength) return;
-
-    lastExtractionTime = now;
-
     try {
-      const result = await extractor.extract(combined);
-      if (result.nodes.length === 0) return;
-
-      db.ingestExtraction(result.nodes, result.edges, combined, "message");
-
-      logger.info?.(
-        `agentsense: message capture extracted ${result.nodes.length} entities`,
-      );
-    } catch (err) {
-      // Restore messages on failure so they're not lost
-      messageBuffer.unshift(...texts);
-      if (messageBuffer.length > MAX_BUFFER_SIZE) {
-        messageBuffer.splice(0, messageBuffer.length - MAX_BUFFER_SIZE);
+      const combined = messageBuffer.join("\n\n---\n\n").slice(0, 4000);
+      if (combined.length >= minMessageLength) {
+        db.addObservation("message", combined, "", "");
+        logger.info?.(`agentsense: buffered ${messageBuffer.length} messages for extraction`);
       }
-      logger.warn(`agentsense: message capture extraction failed: ${String(err)}`);
+      messageBuffer = [];
+    } catch (err) {
+      logger.warn(`agentsense: message buffer flush failed: ${String(err)}`);
     }
+  }
+
+  function scheduleFlush(): void {
+    if (flushTimer) return;
+    flushTimer = setTimeout(() => {
+      flushTimer = null;
+      flushBuffer();
+    }, BUFFER_FLUSH_MS);
   }
 
   function bufferMessage(content: string): void {
@@ -61,12 +48,7 @@ export function createMessageCaptureHandlers(
       messageBuffer.splice(0, messageBuffer.length - MAX_BUFFER_SIZE);
     }
 
-    // Fire-and-forget: never block message delivery
-    if (!pendingExtraction) {
-      pendingExtraction = processBuffer().finally(() => {
-        pendingExtraction = null;
-      });
-    }
+    scheduleFlush();
   }
 
   return {

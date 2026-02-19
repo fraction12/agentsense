@@ -1,7 +1,17 @@
-import Anthropic from "@anthropic-ai/sdk";
+/**
+ * Entity extraction types and parsing utilities.
+ *
+ * NOTE: Direct LLM extraction has been removed. Entity extraction now happens
+ * via an OpenClaw cron job (Haiku agentTurn) that reads pending observations
+ * and writes results back via `openclaw graph ingest`.
+ *
+ * This module provides the extraction prompt template and JSON response parser
+ * for use by the cron job.
+ */
+
 import type { ExtractionResult, EntityType } from "./types.js";
 
-const VALID_ENTITY_TYPES: EntityType[] = [
+export const VALID_ENTITY_TYPES: EntityType[] = [
   "person",
   "project",
   "decision",
@@ -14,7 +24,10 @@ const VALID_ENTITY_TYPES: EntityType[] = [
   "company",
 ];
 
-const EXTRACTION_PROMPT = `You are an entity extraction system. Given conversation text, extract entities and relationships into a knowledge graph.
+/**
+ * The extraction prompt — used by the cron job's agentTurn task.
+ */
+export const EXTRACTION_PROMPT = `You are an entity extraction system. Given conversation text, extract entities and relationships into a knowledge graph.
 
 Output ONLY valid JSON with this exact structure:
 {
@@ -27,47 +40,18 @@ Output ONLY valid JSON with this exact structure:
 }
 
 Rules:
-- Extract concrete entities: people, projects, tools, places, decisions, events, ideas, preferences
-- Use descriptive but concise relation types (e.g. "works_on", "decided_to_use", "prefers", "located_in")
+- Extract concrete entities: people, projects, tools, places, decisions, events, ideas, preferences, organizations, companies
+- Use descriptive but concise relation types (e.g. "works_on", "decided_to_use", "prefers", "located_in", "partner", "employed_by")
 - Every entity in an edge must appear in the nodes array
 - Keep summaries under 100 characters
 - If no entities found, return {"nodes": [], "edges": []}
 - Output ONLY the JSON, no other text`;
 
-export class EntityExtractor {
-  private client: Anthropic;
-
-  constructor(
-    apiKey: string,
-    private model: string,
-  ) {
-    this.client = new Anthropic({ apiKey });
-  }
-
-  async extract(text: string): Promise<ExtractionResult> {
-    const response = await this.client.messages.create({
-      model: this.model,
-      max_tokens: 1024,
-      messages: [
-        {
-          role: "user",
-          content: `Extract entities and relationships from this conversation:\n\n${text}`,
-        },
-      ],
-      system: EXTRACTION_PROMPT,
-    });
-
-    const content = response.content[0];
-    if (content.type !== "text") {
-      return { nodes: [], edges: [] };
-    }
-
-    return parseExtractionResponse(content.text);
-  }
-}
-
-function parseExtractionResponse(text: string): ExtractionResult {
-  // Try to extract JSON from the response
+/**
+ * Parse an LLM extraction response into structured entities.
+ * Handles malformed JSON, code blocks, and validates structure.
+ */
+export function parseExtractionResponse(text: string): ExtractionResult {
   let jsonStr = text.trim();
 
   // Handle markdown code blocks
@@ -135,7 +119,6 @@ function parseExtractionResponse(text: string): ExtractionResult {
         continue;
       }
 
-      // Only include edges where both endpoints exist in extracted nodes
       if (
         !nodeNames.has(e.from.trim().toLowerCase()) ||
         !nodeNames.has(e.to.trim().toLowerCase())

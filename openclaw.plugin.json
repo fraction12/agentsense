@@ -10,22 +10,11 @@
     },
     "autoCapture": {
       "label": "Auto-Capture",
-      "help": "Automatically extract entities from conversations into the knowledge graph"
+      "help": "Automatically buffer conversation text for entity extraction via cron"
     },
     "autoRecall": {
       "label": "Auto-Recall",
       "help": "Automatically inject relevant graph context before agent starts"
-    },
-    "extractionModel": {
-      "label": "Extraction Model",
-      "placeholder": "claude-haiku-4-5-20251001",
-      "help": "Claude model used for entity extraction"
-    },
-    "extractionApiKey": {
-      "label": "Anthropic API Key",
-      "sensitive": true,
-      "placeholder": "sk-ant-...",
-      "help": "API key for Anthropic (entity extraction). Supports ${ANTHROPIC_API_KEY}"
     },
     "maxRecallEntities": {
       "label": "Max Recall Entities",
@@ -35,7 +24,7 @@
     },
     "captureMinMessageLength": {
       "label": "Capture Min Message Length",
-      "help": "Minimum message length eligible for entity extraction",
+      "help": "Minimum message length eligible for capture",
       "advanced": true,
       "placeholder": "50"
     }
@@ -53,12 +42,6 @@
       "autoRecall": {
         "type": "boolean"
       },
-      "extractionModel": {
-        "type": "string"
-      },
-      "extractionApiKey": {
-        "type": "string"
-      },
       "maxRecallEntities": {
         "type": "number",
         "minimum": 1,
@@ -69,7 +52,6 @@
         "minimum": 10,
         "maximum": 1000
       }
-    },
-    "required": ["extractionApiKey"]
+    }
   }
 }

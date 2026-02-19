@@ -1,5 +1,4 @@
 import type { GraphDB } from "../graph-db.js";
-import type { EntityExtractor } from "../extractor.js";
 import type { PluginLogger } from "../plugin-types.js";
 
 function extractTextsFromMessages(messages: unknown[]): string[] {
@@ -35,7 +34,6 @@ function extractTextsFromMessages(messages: unknown[]): string[] {
 
 export function createAgentEndHandler(
   getDb: () => GraphDB | null,
-  extractor: EntityExtractor,
   logger: PluginLogger,
   minMessageLength: number,
 ) {
@@ -56,24 +54,13 @@ export function createAgentEndHandler(
 
       if (combined.length < minMessageLength) return;
 
-      // Truncate to avoid excessive LLM calls
-      const truncated = combined.slice(0, 4000);
-      const result = await extractor.extract(truncated);
+      // Buffer the raw text as a pending observation — extraction happens via cron
+      const truncated = combined.slice(0, 8000);
+      db.addObservation("conversation", truncated, "", ctx.sessionKey || "");
 
-      if (result.nodes.length === 0) return;
-
-      const { nodesUpserted, edgesUpserted } = db.ingestExtraction(
-        result.nodes,
-        result.edges,
-        truncated,
-        ctx.sessionKey || "",
+      logger.info?.(
+        `agentsense: buffered ${texts.length} messages for extraction (${truncated.length} chars)`,
       );
-
-      if (nodesUpserted > 0) {
-        logger.info(
-          `agentsense: auto-captured ${nodesUpserted} entities, ${edgesUpserted} edges`,
-        );
-      }
     } catch (err) {
       logger.warn(`agentsense: auto-capture (agent_end) failed: ${String(err)}`);
     }
@@ -82,7 +69,6 @@ export function createAgentEndHandler(
 
 export function createBeforeCompactionHandler(
   getDb: () => GraphDB | null,
-  extractor: EntityExtractor,
   logger: PluginLogger,
   minMessageLength: number,
 ) {
@@ -103,23 +89,13 @@ export function createBeforeCompactionHandler(
 
       if (combined.length < minMessageLength) return;
 
-      const truncated = combined.slice(0, 6000);
-      const result = await extractor.extract(truncated);
+      // Buffer the full pre-compaction transcript — this is the richest source
+      const truncated = combined.slice(0, 12000);
+      db.addObservation("compaction", truncated, "", ctx.sessionKey || "");
 
-      if (result.nodes.length === 0) return;
-
-      const { nodesUpserted, edgesUpserted } = db.ingestExtraction(
-        result.nodes,
-        result.edges,
-        truncated,
-        ctx.sessionKey || "",
+      logger.info?.(
+        `agentsense: buffered pre-compaction transcript for extraction (${truncated.length} chars)`,
       );
-
-      if (nodesUpserted > 0) {
-        logger.info(
-          `agentsense: captured ${nodesUpserted} entities from compaction (${edgesUpserted} edges)`,
-        );
-      }
     } catch (err) {
       logger.warn(`agentsense: auto-capture (before_compaction) failed: ${String(err)}`);
     }

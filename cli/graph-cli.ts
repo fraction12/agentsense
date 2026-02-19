@@ -100,6 +100,98 @@ export function registerGraphCli(
     });
 
   graph
+    .command("pending")
+    .description("Show pending observations awaiting extraction")
+    .option("--limit <n>", "Max observations to show", "10")
+    .option("--json", "Output as JSON for cron processing")
+    .action((opts: { limit: string; json?: boolean }) => {
+      const db = getDb();
+      if (!db) {
+        console.error("Knowledge graph not initialized");
+        return;
+      }
+
+      const pending = db.getPendingObservations(parseInt(opts.limit, 10));
+      if (pending.length === 0) {
+        if (opts.json) {
+          console.log(JSON.stringify({ pending: [] }));
+        } else {
+          console.log("No pending observations.");
+        }
+        return;
+      }
+
+      if (opts.json) {
+        console.log(
+          JSON.stringify({
+            pending: pending.map((o) => ({
+              id: o.id,
+              source: o.source,
+              text: o.raw_text,
+              session_key: o.session_key,
+              processed_at: o.processed_at,
+            })),
+          }),
+        );
+      } else {
+        for (const obs of pending) {
+          const preview = obs.raw_text.slice(0, 100).replace(/\n/g, " ");
+          console.log(`  [${obs.id}] ${obs.source} — ${preview}...`);
+        }
+        console.log(`\n${pending.length} pending observations`);
+      }
+    });
+
+  graph
+    .command("ingest")
+    .description("Ingest extracted entities into the graph (used by cron)")
+    .argument("<json>", "JSON string with {nodes: [...], edges: [...], observationId: number}")
+    .action((jsonStr: string) => {
+      const db = getDb();
+      if (!db) {
+        console.error("Knowledge graph not initialized");
+        process.exitCode = 1;
+        return;
+      }
+
+      try {
+        const data = JSON.parse(jsonStr) as {
+          nodes?: Array<{ name: string; type: string; summary: string }>;
+          edges?: Array<{ from: string; to: string; relation: string; context: string }>;
+          observationId?: number;
+        };
+
+        if (!data.nodes || !Array.isArray(data.nodes)) {
+          console.error("Invalid input: nodes array required");
+          process.exitCode = 1;
+          return;
+        }
+
+        const result = db.ingestExtraction(
+          data.nodes as import("../types.js").ExtractedNode[],
+          (data.edges || []) as import("../types.js").ExtractedEdge[],
+          "",
+          "",
+        );
+
+        // Mark the observation as processed if provided
+        if (data.observationId) {
+          db.markObservationProcessed(
+            data.observationId,
+            JSON.stringify({ nodes: data.nodes, edges: data.edges }),
+          );
+        }
+
+        console.log(
+          `Ingested ${result.nodesUpserted} entities, ${result.edgesUpserted} edges`,
+        );
+      } catch (err) {
+        console.error(`Ingest failed: ${String(err)}`);
+        process.exitCode = 1;
+      }
+    });
+
+  graph
     .command("stats")
     .description("Show knowledge graph statistics")
     .action(() => {

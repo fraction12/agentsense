@@ -449,6 +449,24 @@ export class GraphDB {
     return { nodesUpserted, edgesUpserted };
   }
 
+  getPendingObservations(limit: number = 10): Observation[] {
+    const db = this.ensureDb();
+    // Pending = entities_json is empty (not yet extracted)
+    return db
+      .prepare(
+        "SELECT * FROM observations WHERE entities_json = '' ORDER BY processed_at ASC LIMIT ?",
+      )
+      .all(limit) as Observation[];
+  }
+
+  markObservationProcessed(id: number, entitiesJson: string): void {
+    const db = this.ensureDb();
+    db.prepare("UPDATE observations SET entities_json = ? WHERE id = ?").run(
+      entitiesJson,
+      id,
+    );
+  }
+
   export(): {
     nodes: GraphNode[];
     edges: GraphEdge[];
