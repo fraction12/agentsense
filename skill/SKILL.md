@@ -14,6 +14,18 @@ Use `graph_search` to find entities, people, projects, organizations, decisions,
 - **Pre-conversation context**: Search for a person before replying to refresh relationship context
 - **Risk scan**: Search for a technology or tool to find past decisions and known issues
 
+## `/graph` Command
+
+When Sir sends `/graph` (with or without arguments), handle it directly:
+
+- `/graph` — run `sqlite3 ~/.openclaw/memory/agentsense.db` to get counts from nodes, edges, observations tables. Show stats overview.
+- `/graph search <query>` — use `graph_search` tool or FTS query to find matching entities. Show name, type, summary, relationships.
+- `/graph recent` — query `SELECT name, type, summary, updated_at FROM nodes ORDER BY updated_at DESC LIMIT 10`
+- `/graph connections <name>` — find the node, then query edges (both directions) to show all relationships.
+- `/graph types` — query `SELECT type, COUNT(*) FROM nodes GROUP BY type ORDER BY COUNT(*) DESC`
+
+Format results cleanly with emoji and markdown for Telegram readability.
+
 ## Important notes
 - The graph is **persistent across sessions** — entities survive compaction and session resets
 - Data is captured **automatically** from conversations — you don't need to feed it manually

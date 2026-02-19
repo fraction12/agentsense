@@ -1,5 +1,10 @@
+import { appendFileSync } from "node:fs";
 import type { GraphDB } from "../graph-db.js";
 import type { PluginLogger } from "../plugin-types.js";
+
+function debugLog(msg: string): void {
+  appendFileSync("/tmp/agentsense-debug.log", `${new Date().toISOString()} ${msg}\n`);
+}
 
 function extractTextsFromMessages(messages: unknown[]): string[] {
   const texts: string[] = [];
@@ -38,25 +43,39 @@ export function createAgentEndHandler(
   minMessageLength: number,
 ) {
   return async (
-    event: { messages: unknown[]; success: boolean; error?: string; durationMs?: number },
-    ctx: { sessionKey?: string },
+    event: Record<string, unknown>,
+    ctx: Record<string, unknown>,
   ): Promise<void> => {
     try {
-      if (!event.success || !event.messages || event.messages.length === 0) return;
+      const messages = event.messages as unknown[] | undefined;
+      const success = event.success as boolean | undefined;
+
+      debugLog(`agent_end — success=${success}, messages=${Array.isArray(messages) ? messages.length : 'none'}`);
+
+      if (!success && success !== undefined) { debugLog("exit: not success"); return; }
+      if (!messages || !Array.isArray(messages) || messages.length === 0) { debugLog("exit: no messages"); return; }
+
+      if (messages[0]) {
+        const m = messages[0] as Record<string, unknown>;
+        debugLog(`first msg — role=${m.role}, content type=${typeof m.content}, keys=${Object.keys(m).join(",")}`);
+      }
 
       const db = getDb();
-      if (!db) return;
+      if (!db) { debugLog("exit: no db"); return; }
 
-      const texts = extractTextsFromMessages(event.messages);
+      const texts = extractTextsFromMessages(messages);
+      debugLog(`extracted ${texts.length} texts, lengths: ${texts.map(t => t.length).join(",")}`);
       const combined = texts
         .filter((t) => t.length >= minMessageLength)
         .join("\n\n---\n\n");
 
-      if (combined.length < minMessageLength) return;
+      debugLog(`combined length: ${combined.length}, minLength: ${minMessageLength}`);
+      if (combined.length < minMessageLength) { debugLog("exit: combined too short"); return; }
 
       // Buffer the raw text as a pending observation — extraction happens via cron
       const truncated = combined.slice(0, 8000);
-      db.addObservation("conversation", truncated, "", ctx.sessionKey || "");
+      debugLog(`writing observation: ${truncated.length} chars`);
+      db.addObservation("conversation", truncated, "", (ctx.sessionKey as string) || "");
 
       logger.info?.(
         `agentsense: buffered ${texts.length} messages for extraction (${truncated.length} chars)`,
