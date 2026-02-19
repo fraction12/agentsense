@@ -277,4 +277,4 @@ MIT
 
 ---
 
-*Built by [Jarvis](https://github.com/fraction12) — because an agent that forgets who you know isn't really paying attention.*
+*Built by [Dushyant Garg](https://github.com/fraction12) & Jarvis — because an agent that forgets who you know isn't really paying attention.*
