@@ -1,0 +1,75 @@
+{
+  "id": "agentsense",
+  "kind": "memory",
+  "skills": ["./skill"],
+  "uiHints": {
+    "dbPath": {
+      "label": "Database Path",
+      "placeholder": "~/.openclaw/memory/agentsense.db",
+      "advanced": true
+    },
+    "autoCapture": {
+      "label": "Auto-Capture",
+      "help": "Automatically extract entities from conversations into the knowledge graph"
+    },
+    "autoRecall": {
+      "label": "Auto-Recall",
+      "help": "Automatically inject relevant graph context before agent starts"
+    },
+    "extractionModel": {
+      "label": "Extraction Model",
+      "placeholder": "claude-haiku-4-5-20251001",
+      "help": "Claude model used for entity extraction"
+    },
+    "extractionApiKey": {
+      "label": "Anthropic API Key",
+      "sensitive": true,
+      "placeholder": "sk-ant-...",
+      "help": "API key for Anthropic (entity extraction). Supports ${ANTHROPIC_API_KEY}"
+    },
+    "maxRecallEntities": {
+      "label": "Max Recall Entities",
+      "help": "Maximum entities to inject into context during auto-recall",
+      "advanced": true,
+      "placeholder": "5"
+    },
+    "captureMinMessageLength": {
+      "label": "Capture Min Message Length",
+      "help": "Minimum message length eligible for entity extraction",
+      "advanced": true,
+      "placeholder": "50"
+    }
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "dbPath": {
+        "type": "string"
+      },
+      "autoCapture": {
+        "type": "boolean"
+      },
+      "autoRecall": {
+        "type": "boolean"
+      },
+      "extractionModel": {
+        "type": "string"
+      },
+      "extractionApiKey": {
+        "type": "string"
+      },
+      "maxRecallEntities": {
+        "type": "number",
+        "minimum": 1,
+        "maximum": 20
+      },
+      "captureMinMessageLength": {
+        "type": "number",
+        "minimum": 10,
+        "maximum": 1000
+      }
+    },
+    "required": ["extractionApiKey"]
+  }
+}
